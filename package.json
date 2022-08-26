@@ -1,0 +1,37 @@
+{
+  "name": "cypress-mailisk",
+  "version": "1.0.0",
+  "description": "Mailisk library for Cypress",
+  "keywords": [
+    "mailisk",
+    "cypress",
+    "cypress-library",
+    "email-automation",
+    "email-testing",
+    "email"
+  ],
+  "main": "index.js",
+  "types": "src/mailiskCommands.d.ts",
+  "scripts": {
+    "tsc": "node_modules/.bin/tsc src/mailiskCommands.d.ts --types node"
+  },
+  "peerDependencies": {
+    "cypress": ">= 2.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mailisk-app/cypress-mailisk.git"
+  },
+  "files": [
+    "src"
+  ],
+  "author": "Mailisk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mailisk-app/cypress-mailisk/issues"
+  },
+  "homepage": "https://github.com/mailisk-app/cypress-mailisk#readme",
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  }
+}
