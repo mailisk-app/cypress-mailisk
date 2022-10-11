@@ -15,7 +15,7 @@ class MailiskCommands {
   }
 
   mailiskListNamespaces() {
-    return this.request.get('/api/namespaces');
+    return this.request.get('api/namespaces');
   }
 
   mailiskSearchInbox(namespace, params, options = {}) {

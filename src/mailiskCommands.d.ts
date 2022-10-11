@@ -73,7 +73,7 @@ export interface SearchInboxResponse {
   /**
    * Parameters that were used for the query
    */
-  params: SearchInboxParams;
+  options: SearchInboxParams;
   /**
    * Emails
    */
