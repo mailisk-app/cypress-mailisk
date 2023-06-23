@@ -97,7 +97,7 @@ declare global {
          *
          * See https://docs.cypress.io/api/commands/request#Arguments
          */
-        options?: Cypress.RequestOptions,
+        options?: Partial<Cypress.RequestOptions>,
       ): Cypress.Chainable<SearchInboxResponse>;
     }
   }
