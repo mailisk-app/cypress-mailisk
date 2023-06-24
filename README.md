@@ -47,14 +47,18 @@ cy.mailiskSearchInbox('yournamespace', { to_addr_prefix: 'test.user@' }).then((r
 
 This Cypress command does a few extra things out of the box compared to calling the raw API directly:
 
-- By default it uses the `wait` flag, this means the call won't timeout until at least one email is received or 5 minutes pass. This timeout is adjustable by passing `timeout` in the options array.
-  ```js
-  // timeout of 1 minute
-  cy.mailiskSearchInbox(namespace, { timeout: 1000 * 60 });
-  // disable wait entirely, may return empty emails objects immediately
-  cy.mailiskSearchInbox(namespace, { wait: false });
-  ```
-- It has a default `from_timestamp` of **current timestmap - 5 seconds**. This means that only new emails will be returned. Without this older emails would be returned, permaturely returning the results if you were waiting for a specific email to arrive.
+- By default it uses the `wait` flag. This means the call won't return until at least one email is received. Disabling this flag via `wait: false` can cause it to return an empty response immediately.
+- The request timeout is adjustable by passing `timeout` in the request options. By default it uses a timeout of 5 minutes.
+- By default `from_timestamp` is set to **current timestamp - 5 seconds**. This ensures that only new emails are returned. Without this, older emails would also be returned, potentially disrupting you if you were waiting for a specific email. This can be overriden by passing the `from_timestamp` parameter (`from_timestmap: 0` will disable filtering by email age).
+
+```js
+// timeout of 5 minute
+cy.mailiskSearchInbox(namespace);
+// timeout of 1 minute
+cy.mailiskSearchInbox(namespace, {}, { timeout: 1000 * 60 });
+// returns immediately, even if the result would be empty
+cy.mailiskSearchInbox(namespace, { wait: false });
+```
 
 The implementation of these features is explained in the [NodeJS Guide](/guides/nodejs).
 
