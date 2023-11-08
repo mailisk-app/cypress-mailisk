@@ -18,6 +18,19 @@ class MailiskCommands {
     return this.request.get('api/namespaces');
   }
 
+  _mailiskSearchAction(namespace, _options, urlParams, startTime, nextTimeout) {
+    return this.request
+      .get(`api/emails/${namespace}/inbox?${urlParams.toString()}`, { ..._options, timeout: nextTimeout })
+      .then((response) => {
+        if (response.total_count !== 0) {
+          return response;
+        }
+        const timeout = Math.max(_options.timeout - (Date.now() - startTime), 1);
+        cy.wait(Math.min(timeout, 9000));
+        return this._mailiskSearchAction(namespace, _options, urlParams, startTime, timeout);
+      });
+  }
+
   mailiskSearchInbox(namespace, params, options = {}) {
     let _params = { ...params };
 
@@ -44,7 +57,14 @@ class MailiskCommands {
       _options.timeout = 1000 * 60 * 5;
     }
 
-    return this.request.get(`api/emails/${namespace}/inbox?${urlParams.toString()}`, _options);
+    // temporary workaround due cypress not supporting overriding maxRedirects
+    if (_params.wait) {
+      urlParams.delete('wait');
+      const startTime = Date.now();
+      return this._mailiskSearchAction(namespace, _options, urlParams, startTime, _options.timeout);
+    } else {
+      return this.request.get(`api/emails/${namespace}/inbox?${urlParams.toString()}`, _options);
+    }
   }
 }
 
