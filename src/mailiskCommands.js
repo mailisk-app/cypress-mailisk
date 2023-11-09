@@ -26,7 +26,7 @@ class MailiskCommands {
           return response;
         }
         const timeout = Math.max(_options.timeout - (Date.now() - startTime), 1);
-        cy.wait(Math.min(timeout, 9000));
+        cy.wait(Math.min(timeout, 9000), { log: false });
         return this._mailiskSearchAction(namespace, _options, urlParams, startTime, timeout);
       });
   }
