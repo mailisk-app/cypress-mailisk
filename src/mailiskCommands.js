@@ -34,9 +34,9 @@ class MailiskCommands {
   mailiskSearchInbox(namespace, params, options = {}) {
     let _params = { ...params };
 
-    // default timestamp, 5 seconds before starting this request
+    // default from_timestamp, 15 minutes before starting this request
     if (params.from_timestamp == null) {
-      _params.from_timestamp = Math.floor(new Date().getTime() / 1000) - 5;
+      _params.from_timestamp = Math.floor(new Date().getTime() / 1000) - 15 * 60;
     }
 
     // by default wait for email

@@ -49,7 +49,7 @@ This Cypress command does a few extra things out of the box compared to calling 
 
 - By default it uses the `wait` flag. This means the call won't return until at least one email is received. Disabling this flag via `wait: false` can cause it to return an empty response immediately.
 - The request timeout is adjustable by passing `timeout` in the request options. By default it uses a timeout of 5 minutes.
-- By default `from_timestamp` is set to **current timestamp - 5 seconds**. This ensures that only new emails are returned. Without this, older emails would also be returned, potentially disrupting you if you were waiting for a specific email. This can be overriden by passing the `from_timestamp` parameter (`from_timestmap: 0` will disable filtering by email age).
+- By default it returns emails in the last 15 minutes. This ensures that only new emails are returned. Without this, older emails would also be returned, potentially disrupting you if you were waiting for a specific email. This can be overriden by passing the `from_timestamp` parameter (`from_timestamp: 0` will disable filtering by email age).
 
 ```js
 // timeout of 5 minute
@@ -80,6 +80,7 @@ describe('Test password reset', () => {
   it('Gets a password reset email', () => {
     cy.mailiskSearchInbox(namespace, {
       to_addr_prefix: testEmailAddr,
+      subject_includes: 'password',
     }).then((response) => {
       expect(response.data).to.not.be.empty;
       const email = response.data[0];
