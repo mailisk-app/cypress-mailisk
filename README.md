@@ -62,6 +62,36 @@ cy.mailiskSearchInbox(namespace, { wait: false });
 
 For the full list of filters and their description see the [Search Inbox](/api-reference/search-inbox#request-1) endpoint reference.
 
+### cy.mailiskGetAttachment
+
+This command retrieves attachment metadata including download URL, filename, content type, and size.
+
+```js
+cy.mailiskGetAttachment('yournamespace', 'attachment-id').then((attachment) => {
+  console.log(attachment.data.filename);
+  console.log(attachment.data.content_type);
+  console.log(attachment.data.size);
+});
+```
+
+### cy.mailiskDownloadAttachment
+
+This command downloads the actual attachment content as a Buffer. It first retrieves the attachment metadata, then downloads the file from the provided download URL.
+
+```js
+cy.mailiskDownloadAttachment('yournamespace', 'attachment-id').then((buffer) => {
+  // Save attachment to file
+  cy.writeFile('downloads/attachment.pdf', buffer);
+});
+```
+
+Both commands accept optional request options as a third parameter:
+
+```js
+cy.mailiskGetAttachment('yournamespace', 'attachment-id', { timeout: 30000 });
+cy.mailiskDownloadAttachment('yournamespace', 'attachment-id', { timeout: 60000 });
+```
+
 ### Filter by TO address
 
 The `to_addr_prefix` option allows filtering by the email's TO address. Specifically the TO address has to start with this.
@@ -107,6 +137,46 @@ cy.mailiskSearchInbox(namespace, {
 ```
 
 ## Common test cases
+
+### Working with email attachments
+
+This example demonstrates how to search for emails with attachments and download them:
+
+```js
+describe('Test email attachments', () => {
+  const namespace = 'yournamespace';
+  const testEmailAddr = `test.user@${namespace}.mailisk.net`;
+
+  it('Finds email with attachment and downloads it', () => {
+    cy.mailiskSearchInbox(namespace, {
+      to_addr_prefix: testEmailAddr,
+      subject_includes: 'invoice',
+    }).then((response) => {
+      expect(response.data).to.not.be.empty;
+      const email = response.data[0];
+      
+      // Check if email has attachments
+      expect(email.attachments).to.not.be.empty;
+      const attachment = email.attachments[0];
+      
+      // Get attachment metadata
+      cy.mailiskGetAttachment(attachment.id).then((attachmentData) => {
+        expect(attachmentData.data.filename).to.contain('.pdf');
+        expect(attachmentData.data.content_type).to.equal('application/pdf');
+        
+        // Download the attachment
+        cy.mailiskDownloadAttachment(attachment.id).then((buffer) => {
+          // Save to downloads folder
+          cy.writeFile(`downloads/${attachmentData.data.filename}`, buffer);
+          
+          // Verify file was downloaded
+          cy.readFile(`downloads/${attachmentData.data.filename}`).should('exist');
+        });
+      });
+    });
+  });
+});
+```
 
 ### Password reset page
 

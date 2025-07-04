@@ -2,7 +2,7 @@ const Request = require('./request');
 
 class MailiskCommands {
   static get cypressCommands() {
-    return ['mailiskSetApiKey', 'mailiskListNamespaces', 'mailiskSearchInbox'];
+    return ['mailiskSetApiKey', 'mailiskListNamespaces', 'mailiskSearchInbox', 'mailiskGetAttachment', 'mailiskDownloadAttachment'];
   }
 
   constructor() {
@@ -65,6 +65,16 @@ class MailiskCommands {
     } else {
       return this.request.get(`api/emails/${namespace}/inbox?${urlParams.toString()}`, _options);
     }
+  }
+
+  mailiskGetAttachment(attachmentId, options = {}) {
+    return this.request.get(`api/attachments/${attachmentId}`, options);
+  }
+
+  mailiskDownloadAttachment(attachmentId, options = {}) {
+    return this.mailiskGetAttachment(attachmentId, options).then((attachment) => {
+      return this.request.getBinary(attachment.data.download_url, options);
+    });
   }
 }
 

@@ -7,6 +7,17 @@ export interface EmailAddress {
   name?: string;
 }
 
+export interface EmailAttachment {
+  /** Unique identifier for the attachment */
+  id: string;
+  /** Filename of the attachment */
+  filename: string;
+  /** Content type of the attachment */
+  content_type: string;
+  /** Size in bytes of the attachment */
+  size: number;
+}
+
 export interface Email {
   /** Namespace scoped ID */
   id: string;
@@ -32,6 +43,8 @@ export interface Email {
   expires_timestamp: number;
   /** The spam score as reported by SpamAssassin */
   spam_score?: number;
+  /** The attachments of the email */
+  attachments?: EmailAttachment[];
 }
 
 export interface SearchInboxParams {
@@ -92,6 +105,17 @@ export interface SearchInboxResponse {
   data: Email[];
 }
 
+export interface GetAttachmentResponse {
+  data: {
+    id: string;
+    filename: string;
+    content_type: string;
+    size: number;
+    expires_at: string | null;
+    download_url: string;
+  };
+}
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -111,6 +135,32 @@ declare global {
          */
         options?: Partial<Cypress.RequestOptions>,
       ): Cypress.Chainable<SearchInboxResponse>;
+
+      mailiskGetAttachment(
+        /**
+         * The attachment ID to retrieve.
+         */
+        attachmentId: string,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<GetAttachmentResponse>;
+
+      mailiskDownloadAttachment(
+        /**
+         * The attachment ID to download.
+         */
+        attachmentId: string,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<Buffer>;
     }
   }
 }
