@@ -81,6 +81,24 @@ class Request {
   del(path, opts) {
     return this.request('DELETE', path, undefined, opts);
   }
+
+  getBinary(url, opts) {
+    // For binary downloads, we need to use the full URL directly
+    const options = {
+      method: 'GET',
+      url: url,
+      encoding: null, // This tells Cypress to return binary data
+      ...opts,
+    };
+    options.failOnStatusCode = false;
+    return cy.request(options).then((response) => {
+      if (response.isOkStatusCode) {
+        return Buffer.from(response.body);
+      }
+      // Use the same error handling as regular requests
+      return this.getResponseHandler()(response);
+    });
+  }
 }
 
 module.exports = Request;
