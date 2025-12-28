@@ -43,8 +43,46 @@ export interface Email {
   expires_timestamp: number;
   /** The spam score as reported by SpamAssassin */
   spam_score?: number;
+  /** The headers of the email */
+  headers?: Record<string, string>;
   /** The attachments of the email */
   attachments?: EmailAttachment[];
+}
+
+export interface SmsMessage {
+  /** Unique identifier for the message */
+  id: string;
+  /** Unique identifier for the SMS phone number */
+  sms_phone_number_id: string;
+  /** Body of the message */
+  body: string;
+  /** From number of the message */
+  from_number: string;
+  /** To number of the message */
+  to_number: string;
+  /** Provider message ID */
+  provider_message_id?: string;
+  /** Date and time the message was created */
+  created_at: string;
+  /** Direction of the message */
+  direction: 'inbound' | 'outbound';
+}
+
+export interface SmsNumber {
+  /** Unique identifier for the SMS number */
+  id: string;
+  /** Unique identifier for the organisation */
+  organisation_id: string;
+  /** Status of the SMS number */
+  status: 'requested' | 'active' | 'disabled';
+  /** Country of the SMS number */
+  country: string;
+  /** SMS Phone number */
+  phone_number?: string;
+  /** Date and time the SMS number was created */
+  created_at: string;
+  /** Date and time the SMS number was updated */
+  updated_at: string;
 }
 
 export interface SearchInboxParams {
@@ -105,6 +143,15 @@ export interface SearchInboxResponse {
   data: Email[];
 }
 
+export interface SmtpSettings {
+  data: {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+  };
+}
+
 export interface GetAttachmentResponse {
   data: {
     id: string;
@@ -116,9 +163,67 @@ export interface GetAttachmentResponse {
   };
 }
 
+export interface ListNamespacesResponse {
+  total_count: number;
+  data: { id: string; namespace: string }[];
+}
+
+export interface SearchSmsMessagesParams {
+  /**
+   * The maximum number of SMS messages returned (1-100), used alongside `offset` for pagination.
+   */
+  limit?: number;
+  /**
+   * The number of SMS messages to skip/ignore, used alongside `limit` for pagination.
+   */
+  offset?: number;
+  /**
+   * Filter messages by body contents (case insensitive).
+   */
+  body?: string;
+  /**
+   * Filter messages by sender phone number prefix.
+   */
+  from_number?: string;
+  /**
+   * Filter messages created on or after this date (Date object or ISO 8601 string).
+   */
+  from_date?: Date | string;
+  /**
+   * Filter messages created on or before this date (Date object or ISO 8601 string).
+   */
+  to_date?: Date | string;
+  /**
+   * When true, keep the request open until at least one SMS is returned.
+   */
+  wait?: boolean;
+}
+
+export interface SearchSmsMessagesResponse {
+  total_count: number;
+  options: SearchSmsMessagesParams;
+  data: SmsMessage[];
+}
+
+export interface ListSmsNumbersResponse {
+  total_count: number;
+  data: SmsNumber[];
+}
+
+export interface SendVirtualSmsParams {
+  /** The phone number to send the SMS from */
+  from_number: string;
+  /** The phone number to send the SMS to */
+  to_number: string;
+  /** The body of the SMS message */
+  body: string;
+}
+
 declare global {
   namespace Cypress {
     interface Chainable {
+      mailiskListNamespaces(): Cypress.Chainable<ListNamespacesResponse>;
+
       mailiskSearchInbox(
         /**
          * The unique namespace to search.
@@ -161,6 +266,32 @@ declare global {
          */
         options?: Partial<Cypress.RequestOptions>,
       ): Cypress.Chainable<Buffer>;
+
+      mailiskSearchSms(
+        /**
+         * The phone number to search.
+         */
+        phoneNumber: string,
+        /**
+         * Search parameters.
+         */
+        params?: SearchSmsMessagesParams,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<SearchSmsMessagesResponse>;
+
+      mailiskListSmsNumbers(
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<ListSmsNumbersResponse>;
     }
   }
 }

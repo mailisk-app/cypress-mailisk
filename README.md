@@ -1,16 +1,31 @@
 # cypress-mailisk
 
-## Install with npm
+Mailisk is an end-to-end email and SMS testing platform. It allows you to receive emails and SMS messages with code to automate tests.
+
+- Get a unique subdomain and unlimited email addresses for free.
+- Easily automate E2E password reset and account verification by catching emails.
+- Receive SMS messages and automate SMS tests.
+- Virtual SMTP and SMS support to test without 3rd party clients.
+
+## Get started
+
+For a more step-by-step walkthrough see the [Cypress Guide](https://docs.mailisk.com/guides/cypress.html).
+
+### Installation
+
+#### Install with npm
 
 ```shell
 npm install --save-dev cypress-mailisk
 ```
 
-## Install with Yarn
+#### Install with Yarn
 
 ```shell
 yarn add cypress-mailisk --dev
 ```
+
+#### Add to Cypress
 
 After installing the package add the following in your project's `cypress/support/e2e.js`:
 
@@ -36,38 +51,83 @@ The cypress-mailisk plugin provides additional commands which can be accessed on
 
 ### cy.mailiskSearchInbox
 
-This is the main command to interact with Mailisk, it wraps the [Search Inbox](/api-reference/search-inbox) endpoint.
+This is the main command to interact with Mailisk, it wraps the [Search Inbox](/api-reference/search-inbox) endpoint. See the reference documentation for the full list of filters and their description.
 
 ```js
-cy.mailiskSearchInbox('yournamespace', { to_addr_prefix: 'test.user@' }).then((response) => {
+cy.mailiskSearchInbox('yournamespace', { to_addr_prefix: 'test.user@', subject_includes: 'register' }).then(
+  (response) => {
+    const emails = response.data;
+    expect(emails).to.not.be.empty;
+  },
+);
+```
+
+This command does a few extra things out of the box:
+
+- Waits until at least one new email arrives (override with `wait: false`).
+- Times out after 5 minutes if nothing shows up (adjust via `requestOptions.timeout`).
+- Ignores messages older than 15 minutes to avoid picking up leftovers from previous tests (change via `from_timestamp`).
+
+#### Quick examples
+
+```js
+// wait up to the default 5 min for *any* new mail
+cy.mailiskSearchInbox(namespace);
+// custom 60-second timeout
+cy.mailiskSearchInbox(namespace, {}, { timeout: 1000 * 60 });
+// polling pattern — return immediately, even if inbox is empty
+cy.mailiskSearchInbox(namespace, { wait: false });
+// returns the last 20 emails in the namespace immediately
+cy.mailiskSearchInbox(namespace, { wait: false, from_timestamp: 0, limit: 20 });
+```
+
+#### Filter by destination address
+
+A common pattern is to wait for the email your UI just triggered (e.g. password-reset).
+Pass `to_addr_prefix` so you don’t pick up stale messages:
+
+```js
+cy.mailiskSearchInbox(namespace, {
+  to_addr_prefix: `test.user@${namespace}.mailisk.net`,
+}).then((response) => {
   const emails = response.data;
-  // ...
+  expect(emails).to.not.be.empty;
 });
 ```
 
-This Cypress command does a few extra things out of the box compared to calling the raw API directly:
+#### Filter by sender address
 
-- By default it uses the `wait` flag. This means the call won't return until at least one email is received. Disabling this flag via `wait: false` can cause it to return an empty response immediately.
-- The request timeout is adjustable by passing `timeout` in the request options. By default it uses a timeout of 5 minutes.
-- By default it returns emails in the last 15 minutes. This ensures that only new emails are returned. This can be overriden by passing the `from_timestamp` parameter (`from_timestamp: 0` will disable filtering by email age).
+Use `from_addr_includes` to narrow results to a sender or domain. This is useful when multiple systems write to the same namespace but only one sender matters for the test.
 
 ```js
-// timeout of 5 minute
-cy.mailiskSearchInbox(namespace);
-// timeout of 1 minute
-cy.mailiskSearchInbox(namespace, {}, { timeout: 1000 * 60 });
-// returns immediately, even if the result would be empty
-cy.mailiskSearchInbox(namespace, { wait: false });
+cy.mailiskSearchInbox(namespace, {
+  from_addr_includes: '@example.com',
+}).then((response) => {
+  const emails = response.data;
+  expect(emails).to.not.be.empty;
+});
 ```
 
-For the full list of filters and their description see the [Search Inbox](/api-reference/search-inbox#request-1) endpoint reference.
+#### Filter by subject contents
+
+The `subject_includes` filter helps when the UI sends different notification types from the same sender. Matching is case-insensitive and only requires the provided string to be present.
+
+```js
+cy.mailiskSearchInbox(namespace, {
+  to_addr_prefix: `test.user@${namespace}.mailisk.net`,
+  subject_includes: 'password reset',
+}).then((response) => {
+  const emails = response.data;
+  expect(emails).to.not.be.empty;
+});
+```
 
 ### cy.mailiskGetAttachment
 
 This command retrieves attachment metadata including download URL, filename, content type, and size.
 
 ```js
-cy.mailiskGetAttachment('yournamespace', 'attachment-id').then((attachment) => {
+cy.mailiskGetAttachment('attachment-id').then((attachment) => {
   console.log(attachment.data.filename);
   console.log(attachment.data.content_type);
   console.log(attachment.data.size);
@@ -79,60 +139,72 @@ cy.mailiskGetAttachment('yournamespace', 'attachment-id').then((attachment) => {
 This command downloads the actual attachment content as a Buffer. It first retrieves the attachment metadata, then downloads the file from the provided download URL.
 
 ```js
-cy.mailiskDownloadAttachment('yournamespace', 'attachment-id').then((buffer) => {
-  // Save attachment to file
+cy.mailiskDownloadAttachment('attachment-id').then((buffer) => {
   cy.writeFile('downloads/attachment.pdf', buffer);
 });
 ```
 
-Both commands accept optional request options as a third parameter:
+### cy.mailiskSearchSms
+
+This is the main command to interact with Mailisk SMS, it wraps the [Search SMS](/api-reference/search-sms) endpoint. Use a phone number that is registered to your account.
 
 ```js
-cy.mailiskGetAttachment('yournamespace', 'attachment-id', { timeout: 30000 });
-cy.mailiskDownloadAttachment('yournamespace', 'attachment-id', { timeout: 60000 });
-```
-
-### Filter by TO address
-
-The `to_addr_prefix` option allows filtering by the email's TO address. Specifically the TO address has to start with this.
-
-For example, if someone sends an email to `my-user-1@yournamespace.mailisk.net`, you can filter it by using `my-user-1@`:
-
-```js
-cy.mailiskSearchInbox(namespace, {
-  to_addr_prefix: 'my-user-1@',
+cy.mailiskSearchSms('phoneNumber', { from_date: new Date('2023-01-01T00:00:00Z'), limit: 5 }).then((response) => {
+  const smsMessages = response.data;
 });
 ```
 
-### Filter by FROM address
+This Cypress command does a few extra things out of the box compared to calling the raw API directly:
 
-The `from_addr_includes` option allows filtering by the email's FROM address. Specifically the TO address has to include this. Note that this is different from the to address as it is _includes_ not _prefix_.
+- Waits until at least one SMS matches the filters (override with `wait: false`).
+- Times out after 5 minutes if nothing shows up (adjust via `requestOptions.timeout`).
+- Ignores SMS older than 15 minutes by default (override with `from_date`).
 
-For example, if someone sends an email from the `example.com` domain we could filter like so:
+#### Quick examples
 
 ```js
-cy.mailiskSearchInbox(namespace, {
-  from_addr_includes: '@example.com',
+// wait up to the default 5 min for *any* new SMS sent to the phone number
+cy.mailiskSearchSms('phoneNumber');
+// custom 60-second timeout
+cy.mailiskSearchSms('phoneNumber', {}, { timeout: 1000 * 60 });
+// polling pattern — return immediately, even if inbox is empty
+cy.mailiskSearchSms('phoneNumber', { wait: false });
+// returns the last 20 SMS messages for the phone number immediately
+cy.mailiskSearchSms('phoneNumber', { wait: false, from_date: new Date(0), limit: 20 });
+```
+
+#### Filter by sender phone number
+
+Use `from_number` to narrow results to a specific phone number.
+
+```js
+cy.mailiskSearchSms('phoneNumber', {
+  from_number: '1234567890',
+}).then((response) => {
+  const smsMessages = response.data;
 });
 ```
 
-If we know a specific email address we want to listen to we can do this:
+#### Filter by body contents
+
+Use `body` to narrow results to a specific message body.
 
 ```js
-cy.mailiskSearchInbox(namespace, {
-  from_addr_includes: 'no-reply@example.com',
+cy.mailiskSearchSms('phoneNumber', {
+  body: 'Here is your code:',
+}).then((response) => {
+  const smsMessages = response.data;
 });
 ```
 
-### Filter by Subject
+### cy.mailiskListSmsNumbers
 
-The `subject_includes` option allows filtering by the email's Subject. Specifically the Subject has to include this (case-insensitive).
-
-If we're testing password reset that sends an email with the subject `Password reset request`. We could filter by something like this:
+This command lists the SMS numbers available to the current API key.
 
 ```js
-cy.mailiskSearchInbox(namespace, {
-  subject_includes: 'password reset request',
+cy.mailiskListSmsNumbers().then((response) => {
+  const smsNumbers = response.data;
+  expect(smsNumbers).to.not.be.empty;
 });
 ```
 
@@ -154,21 +226,21 @@ describe('Test email attachments', () => {
     }).then((response) => {
       expect(response.data).to.not.be.empty;
       const email = response.data[0];
-      
+
       // Check if email has attachments
       expect(email.attachments).to.not.be.empty;
       const attachment = email.attachments[0];
-      
+
       // Get attachment metadata
       cy.mailiskGetAttachment(attachment.id).then((attachmentData) => {
         expect(attachmentData.data.filename).to.contain('.pdf');
         expect(attachmentData.data.content_type).to.equal('application/pdf');
-        
+
         // Download the attachment
         cy.mailiskDownloadAttachment(attachment.id).then((buffer) => {
           // Save to downloads folder
           cy.writeFile(`downloads/${attachmentData.data.filename}`, buffer);
-          
+
           // Verify file was downloaded
           cy.readFile(`downloads/${attachmentData.data.filename}`).should('exist');
         });

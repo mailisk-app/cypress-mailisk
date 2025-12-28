@@ -42,4 +42,14 @@ describe('mailiskSearchInbox', () => {
       expect.any(Object)
     );
   });
+
+  test('should allow explicit from_timestamp zero to override default', () => {
+    const instance = new MailiskCommands();
+    const mockGet = jest.fn().mockResolvedValue({ emails: [], total_count: 0 });
+    instance.request = { get: mockGet };
+
+    instance.mailiskSearchInbox('test', { wait: false, from_timestamp: 0 });
+
+    expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('from_timestamp=0'), expect.any(Object));
+  });
 });
