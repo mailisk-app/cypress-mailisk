@@ -2,12 +2,12 @@ const MailiskCommands = require('../src/mailiskCommands');
 
 // Mock Cypress before importing
 global.Cypress = {
-  env: jest.fn().mockReturnValue('test-api-key')
+  env: jest.fn().mockReturnValue('test-api-key'),
 };
 
 global.cy = {
   wait: jest.fn(),
-  request: jest.fn().mockResolvedValue({ isOkStatusCode: true, body: {} })
+  request: jest.fn().mockResolvedValue({ isOkStatusCode: true, body: {} }),
 };
 
 describe('MailiskCommands - Basic Tests', () => {
@@ -18,7 +18,9 @@ describe('MailiskCommands - Basic Tests', () => {
       'mailiskListNamespaces',
       'mailiskSearchInbox',
       'mailiskGetAttachment',
-      'mailiskDownloadAttachment'
+      'mailiskDownloadAttachment',
+      'mailiskSearchSms',
+      'mailiskListSmsNumbers',
     ]);
   });
 
