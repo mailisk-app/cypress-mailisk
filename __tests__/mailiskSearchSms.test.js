@@ -1,10 +1,8 @@
 const MailiskCommands = require('../src/mailiskCommands');
-
-global.Cypress = {
-  env: jest.fn().mockReturnValue('test-api-key'),
-};
+const { mockCyEnv } = require('./testUtils');
 
 global.cy = {
+  env: mockCyEnv(),
   wait: jest.fn(),
   request: jest.fn().mockResolvedValue({ isOkStatusCode: true, body: {} }),
 };
@@ -23,7 +21,7 @@ describe('mailiskSearchSms', () => {
     const result = await instance.mailiskSearchSms('1234567890', { from_date: fromDate, limit: 5 });
 
     expect(actionSpy).toHaveBeenCalledTimes(1);
-    const [, passedOptions, urlParams, startTime, timeout] = actionSpy.mock.calls[0];
+    const [, , passedOptions, urlParams, startTime, timeout] = actionSpy.mock.calls[0];
     expect(passedOptions).toEqual({ timeout: 1000 * 60 * 5 });
     expect(urlParams.get('wait')).toBeNull();
     expect(urlParams.get('limit')).toBe('5');

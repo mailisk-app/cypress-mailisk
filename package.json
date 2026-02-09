@@ -1,6 +1,6 @@
 {
   "name": "cypress-mailisk",
-  "version": "2.2.1",
+  "version": "3.0.0",
   "description": "Mailisk library for Cypress",
   "keywords": [
     "mailisk",
@@ -19,7 +19,7 @@
     "test:coverage": "jest --coverage"
   },
   "peerDependencies": {
-    "cypress": ">= 2.1.0"
+    "cypress": ">= 15.10.0"
   },
   "repository": {
     "type": "git",

@@ -1,11 +1,8 @@
 const MailiskCommands = require('../src/mailiskCommands');
-
-// Mock Cypress before importing
-global.Cypress = {
-  env: jest.fn().mockReturnValue('test-api-key'),
-};
+const { mockCyEnv } = require('./testUtils');
 
 global.cy = {
+  env: mockCyEnv(),
   wait: jest.fn(),
   request: jest.fn().mockResolvedValue({ isOkStatusCode: true, body: {} }),
 };
@@ -24,14 +21,14 @@ describe('MailiskCommands - Basic Tests', () => {
     ]);
   });
 
-  test('should create instance with default API key', () => {
+  test('should create instance without initializing request eagerly', () => {
     const instance = new MailiskCommands();
-    expect(instance.request).toBeDefined();
+    expect(instance.request).toBeNull();
   });
 
-  test('should set new API key', () => {
+  test('should set new API key', async () => {
     const instance = new MailiskCommands();
-    instance.mailiskSetApiKey('new-key');
+    await instance.mailiskSetApiKey('new-key');
     expect(instance.request).toBeDefined();
   });
 });

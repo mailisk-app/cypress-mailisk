@@ -1,10 +1,8 @@
 const MailiskCommands = require('../src/mailiskCommands');
-
-global.Cypress = {
-  env: jest.fn().mockReturnValue('test-api-key')
-};
+const { mockCyEnv } = require('./testUtils');
 
 global.cy = {
+  env: mockCyEnv(),
   wait: jest.fn(),
   request: jest.fn().mockResolvedValue({ isOkStatusCode: true, body: {} })
 };

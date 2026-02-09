@@ -1,16 +1,14 @@
 const MailiskCommands = require('../src/mailiskCommands');
-
-global.Cypress = {
-  env: jest.fn().mockReturnValue('test-api-key')
-};
+const { mockCyEnv } = require('./testUtils');
 
 global.cy = {
+  env: mockCyEnv(),
   wait: jest.fn(),
   request: jest.fn().mockResolvedValue({ isOkStatusCode: true, body: {} })
 };
 
 describe('mailiskSearchInbox', () => {
-  test('should search inbox with parameters', () => {
+  test('should search inbox with parameters', async () => {
     const instance = new MailiskCommands();
     const mockGet = jest.fn().mockResolvedValue({ emails: [], total_count: 0 });
     instance.request = { get: mockGet };
@@ -18,7 +16,7 @@ describe('mailiskSearchInbox', () => {
     const namespace = 'test-namespace';
     const params = { subject: 'test', wait: false };
     
-    instance.mailiskSearchInbox(namespace, params);
+    await instance.mailiskSearchInbox(namespace, params);
     
     expect(mockGet).toHaveBeenCalledWith(
       expect.stringContaining(`api/emails/${namespace}/inbox`),
@@ -26,7 +24,7 @@ describe('mailiskSearchInbox', () => {
     );
   });
 
-  test('should set default from_timestamp', () => {
+  test('should set default from_timestamp', async () => {
     const instance = new MailiskCommands();
     const mockGet = jest.fn().mockResolvedValue({ emails: [], total_count: 0 });
     instance.request = { get: mockGet };
@@ -34,7 +32,7 @@ describe('mailiskSearchInbox', () => {
     const now = Date.now();
     jest.spyOn(Date, 'now').mockReturnValue(now);
     
-    instance.mailiskSearchInbox('test', { wait: false });
+    await instance.mailiskSearchInbox('test', { wait: false });
     
     const expectedTimestamp = Math.floor(now / 1000) - 15 * 60;
     expect(mockGet).toHaveBeenCalledWith(
@@ -43,12 +41,12 @@ describe('mailiskSearchInbox', () => {
     );
   });
 
-  test('should allow explicit from_timestamp zero to override default', () => {
+  test('should allow explicit from_timestamp zero to override default', async () => {
     const instance = new MailiskCommands();
     const mockGet = jest.fn().mockResolvedValue({ emails: [], total_count: 0 });
     instance.request = { get: mockGet };
 
-    instance.mailiskSearchInbox('test', { wait: false, from_timestamp: 0 });
+    await instance.mailiskSearchInbox('test', { wait: false, from_timestamp: 0 });
 
     expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('from_timestamp=0'), expect.any(Object));
   });
