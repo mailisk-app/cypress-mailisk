@@ -11,6 +11,10 @@ Mailisk is an end-to-end email and SMS testing platform. It allows you to receiv
 
 For a more step-by-step walkthrough see the [Cypress Guide](https://docs.mailisk.com/guides/cypress.html).
 
+### Requirements
+
+- Node.js 18 or newer
+
 ### Installation
 
 #### Install with npm
