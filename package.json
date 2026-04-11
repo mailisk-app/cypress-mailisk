@@ -1,6 +1,6 @@
 {
   "name": "cypress-mailisk",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Mailisk library for Cypress",
   "keywords": [
     "mailisk",
