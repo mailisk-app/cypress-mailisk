@@ -212,6 +212,46 @@ cy.mailiskListSmsNumbers().then((response) => {
 });
 ```
 
+### TOTP authenticator devices
+
+These commands manage saved Mailisk Authenticator devices and generate OTP codes through the Mailisk API. Use an organisation API key for these endpoints.
+
+```js
+cy.mailiskDeviceList({ issuer: 'GitHub', username: 'qa@example.com' }).then((response) => {
+  const devices = response.items;
+});
+
+cy.mailiskDeviceCreate({
+  name: 'GitHub staging',
+  sharedSecret: 'JBSWY3DPEHPK3PXP',
+}).then((device) => {
+  cy.mailiskDeviceOtpByDeviceId(device.id).then((otp) => {
+    expect(otp.code).to.match(/^\d{6}$/);
+  });
+});
+
+cy.mailiskDeviceCreateCustom({
+  secret: 'JBSWY3DPEHPK3PXP',
+  username: 'qa@example.com',
+  issuer: 'GitHub',
+  digits: 6,
+  period: 30,
+  algorithm: 'SHA1',
+});
+
+cy.mailiskDeviceCreateFromBase32SecretKey({
+  base32SecretKey: 'JBSWY3DPEHPK3PXP',
+  issuer: 'GitHub',
+});
+
+cy.mailiskDeviceCreateFromOtpAuthUrl({
+  otpAuthUrl: 'otpauth://totp/GitHub:qa@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub',
+});
+
+cy.mailiskDeviceOtpBySharedSecret('JBSWY3DPEHPK3PXP'); // one-off code without saving a device
+cy.mailiskDeviceDelete('9b1f6ec0-b90d-4bd8-8dd0-f6b2d5138273');
+```
+
 ## Common test cases
 
 ### Working with email attachments

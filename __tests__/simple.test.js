@@ -18,6 +18,14 @@ describe('MailiskCommands - Basic Tests', () => {
       'mailiskDownloadAttachment',
       'mailiskSearchSms',
       'mailiskListSmsNumbers',
+      'mailiskDeviceList',
+      'mailiskDeviceCreate',
+      'mailiskDeviceCreateCustom',
+      'mailiskDeviceCreateFromBase32SecretKey',
+      'mailiskDeviceCreateFromOtpAuthUrl',
+      'mailiskDeviceOtpByDeviceId',
+      'mailiskDeviceOtpBySharedSecret',
+      'mailiskDeviceDelete',
     ]);
   });
 

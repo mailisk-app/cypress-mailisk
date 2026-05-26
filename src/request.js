@@ -6,6 +6,7 @@ class Request {
     this.apiKey = options.apiKey;
     this.headers = {
       Accept: 'application/json',
+      'Content-Type': 'application/json',
       'X-Api-Key': `${this.apiKey}`,
       'User-Agent': `cypress-mailisk/${pkg.version}`,
     };
@@ -22,6 +23,7 @@ class Request {
       url: `${this.apiUrl}${path}`,
       headers: {
         Accept: this.headers.Accept,
+        'Content-Type': this.headers['Content-Type'],
         'X-Api-Key': this.headers['X-Api-Key'],
         'User-Agent': this.headers['User-Agent'],
       },
