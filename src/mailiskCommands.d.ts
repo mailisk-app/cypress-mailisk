@@ -219,6 +219,129 @@ export interface SendVirtualSmsParams {
   body: string;
 }
 
+export type TotpAlgorithm = 'SHA1' | 'SHA256' | 'SHA512';
+
+export type KnownTotpDeviceSource = 'shared_secret' | 'custom' | 'base32_secret_key' | 'otpauth_url';
+
+export type TotpDeviceSource = KnownTotpDeviceSource | (string & {});
+
+export interface TotpDevice {
+  /** Unique identifier for the saved authenticator device */
+  id: string;
+  /** Unique identifier for the organisation */
+  organisation_id: string;
+  /** Device display name */
+  name: string;
+  /** Account label, if one is specified */
+  username?: string | null;
+  /** Issuer/app label, if one is specified */
+  issuer?: string | null;
+  /** Number of digits in generated OTP codes */
+  digits: number;
+  /** OTP validity period in seconds */
+  period: number;
+  /** TOTP hash algorithm */
+  algorithm: TotpAlgorithm;
+  /** Source used to create the saved device */
+  source: TotpDeviceSource;
+  /** Optional expiration timestamp */
+  expiresAt?: string | null;
+  /** Date and time the device was created */
+  created_at: string;
+  /** Date and time the device was updated */
+  updated_at: string;
+}
+
+export interface TotpDeviceListParams {
+  /** Maximum number of devices returned. */
+  limit?: number;
+  /** Number of devices to skip. */
+  offset?: number;
+  /** Case-insensitive partial username match. */
+  username?: string;
+  /** Case-insensitive partial issuer match. */
+  issuer?: string;
+}
+
+export interface TotpDeviceListResponse {
+  total_count: number;
+  options: TotpDeviceListParams;
+  items: TotpDevice[];
+}
+
+export interface CreateTotpDeviceParams {
+  /** Base32 shared secret. */
+  sharedSecret: string;
+  /** Optional device display name. */
+  name?: string;
+  /** Optional future ISO expiration timestamp. */
+  expiresAt?: string;
+}
+
+export interface CreateCustomTotpDeviceParams {
+  /** Base32 shared secret. */
+  secret: string;
+  /** Optional device display name. */
+  name?: string;
+  /** Optional account label. */
+  username?: string;
+  /** Optional issuer/app label. */
+  issuer?: string;
+  /** Number of digits in generated OTP codes. */
+  digits?: 6 | 8;
+  /** OTP validity period in seconds. */
+  period?: number;
+  /** TOTP hash algorithm. */
+  algorithm?: TotpAlgorithm;
+  /** Optional future ISO expiration timestamp. */
+  expiresAt?: string;
+}
+
+export interface CreateBase32SecretKeyTotpDeviceParams {
+  /** Base32 secret key. */
+  base32SecretKey: string;
+  /** Optional device display name. */
+  name?: string;
+  /** Optional account label. */
+  username?: string;
+  /** Optional issuer/app label. */
+  issuer?: string;
+  /** Number of digits in generated OTP codes. */
+  digits?: 6 | 8;
+  /** OTP validity period in seconds. */
+  period?: number;
+  /** TOTP hash algorithm. */
+  algorithm?: TotpAlgorithm;
+  /** Optional future ISO expiration timestamp. */
+  expiresAt?: string;
+}
+
+export interface CreateOtpAuthUrlTotpDeviceParams {
+  /** otpauth://totp URL with a secret query parameter. */
+  otpAuthUrl: string;
+  /** Optional device display name override. */
+  name?: string;
+  /** Optional account label fallback. */
+  username?: string;
+  /** Optional issuer/app label fallback. */
+  issuer?: string;
+  /** Number of digits in generated OTP codes, used only if missing from the URL. */
+  digits?: 6 | 8;
+  /** OTP validity period in seconds, used only if missing from the URL. */
+  period?: number;
+  /** TOTP hash algorithm, used only if missing from the URL. */
+  algorithm?: TotpAlgorithm;
+  /** Optional future ISO expiration timestamp. */
+  expiresAt?: string;
+}
+
+export interface TotpOtpResponse {
+  /** Generated one-time password code. */
+  code: string;
+  /** ISO timestamp when the code expires. */
+  expires: string;
+}
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -292,6 +415,110 @@ declare global {
          */
         options?: Partial<Cypress.RequestOptions>,
       ): Cypress.Chainable<ListSmsNumbersResponse>;
+
+      mailiskDeviceList(
+        /**
+         * List filters and pagination options.
+         */
+        params?: TotpDeviceListParams,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpDeviceListResponse>;
+
+      mailiskDeviceCreate(
+        /**
+         * Saved device input using default TOTP settings.
+         */
+        input: CreateTotpDeviceParams,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpDevice>;
+
+      mailiskDeviceCreateCustom(
+        /**
+         * Saved device input using custom TOTP settings.
+         */
+        input: CreateCustomTotpDeviceParams,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpDevice>;
+
+      mailiskDeviceCreateFromBase32SecretKey(
+        /**
+         * Saved device input using a Base32 secret key.
+         */
+        input: CreateBase32SecretKeyTotpDeviceParams,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpDevice>;
+
+      mailiskDeviceCreateFromOtpAuthUrl(
+        /**
+         * Saved device input using an otpauth URL.
+         */
+        input: CreateOtpAuthUrlTotpDeviceParams,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpDevice>;
+
+      mailiskDeviceOtpByDeviceId(
+        /**
+         * Saved device ID.
+         */
+        deviceId: string,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpOtpResponse>;
+
+      mailiskDeviceOtpBySharedSecret(
+        /**
+         * Shared secret for one-off OTP generation.
+         */
+        sharedSecret: string,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpOtpResponse>;
+
+      mailiskDeviceDelete(
+        /**
+         * Saved device ID.
+         */
+        deviceId: string,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<void>;
     }
   }
 }

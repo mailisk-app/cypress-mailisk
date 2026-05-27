@@ -22,6 +22,7 @@ describe('Request Class', () => {
     const request = new Request({ apiKey: 'test-key' });
     expect(request.headers).toMatchObject({
       Accept: 'application/json',
+      'Content-Type': 'application/json',
       'X-Api-Key': 'test-key'
     });
   });

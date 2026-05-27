@@ -10,6 +10,14 @@ class MailiskCommands {
       'mailiskDownloadAttachment',
       'mailiskSearchSms',
       'mailiskListSmsNumbers',
+      'mailiskDeviceList',
+      'mailiskDeviceCreate',
+      'mailiskDeviceCreateCustom',
+      'mailiskDeviceCreateFromBase32SecretKey',
+      'mailiskDeviceCreateFromOtpAuthUrl',
+      'mailiskDeviceOtpByDeviceId',
+      'mailiskDeviceOtpBySharedSecret',
+      'mailiskDeviceDelete',
     ];
   }
 
@@ -185,6 +193,65 @@ class MailiskCommands {
 
   mailiskListSmsNumbers(options = {}) {
     return this._withRequest((request) => request.get(`api/sms/numbers`, options));
+  }
+
+  _buildUrlParams(params = {}) {
+    const urlParams = new URLSearchParams();
+    for (const key in params) {
+      let value = params[key];
+      if (typeof value === 'string') {
+        value = value.trim();
+      }
+      if (value !== undefined && value !== null && value !== '') {
+        urlParams.set(key, value.toString());
+      }
+    }
+    return urlParams;
+  }
+
+  _requireNonEmptyString(value, label) {
+    if (typeof value !== 'string' || value.trim() === '') {
+      throw new Error(`${label} must be a non-empty string.`);
+    }
+    return value.trim();
+  }
+
+  mailiskDeviceList(params = {}, options = {}) {
+    const urlParams = this._buildUrlParams(params);
+    const query = urlParams.toString();
+    const path = query ? `api/devices?${query}` : 'api/devices';
+    return this._withRequest((request) => request.get(path, options));
+  }
+
+  mailiskDeviceCreate(input, options = {}) {
+    return this._withRequest((request) => request.post('api/devices', input, options));
+  }
+
+  mailiskDeviceCreateCustom(input, options = {}) {
+    return this._withRequest((request) => request.post('api/devices/custom', input, options));
+  }
+
+  mailiskDeviceCreateFromBase32SecretKey(input, options = {}) {
+    return this._withRequest((request) => request.post('api/devices/base32-secret-key', input, options));
+  }
+
+  mailiskDeviceCreateFromOtpAuthUrl(input, options = {}) {
+    return this._withRequest((request) => request.post('api/devices/otpauth-url', input, options));
+  }
+
+  mailiskDeviceOtpByDeviceId(deviceId, options = {}) {
+    const encodedDeviceId = encodeURIComponent(this._requireNonEmptyString(deviceId, 'deviceId'));
+    return this._withRequest((request) => request.get(`api/devices/${encodedDeviceId}/otp`, options));
+  }
+
+  mailiskDeviceOtpBySharedSecret(sharedSecret, options = {}) {
+    const normalizedSharedSecret = this._requireNonEmptyString(sharedSecret, 'sharedSecret');
+    return this._withRequest((request) => request.post('api/devices/otp', { sharedSecret: normalizedSharedSecret }, options));
+  }
+
+  mailiskDeviceDelete(deviceId, options = {}) {
+    const encodedDeviceId = encodeURIComponent(this._requireNonEmptyString(deviceId, 'deviceId'));
+    return this._withRequest((request) => request.del(`api/devices/${encodedDeviceId}`, options).then(() => undefined));
   }
 }
 
