@@ -223,7 +223,7 @@ cy.mailiskDeviceList({ issuer: 'GitHub', username: 'qa@example.com' }).then((res
 
 cy.mailiskDeviceCreate({
   name: 'GitHub staging',
-  sharedSecret: 'JBSWY3DPEHPK3PXP',
+  shared_secret: 'JBSWY3DPEHPK3PXP',
 }).then((device) => {
   cy.mailiskDeviceOtpByDeviceId(device.id).then((otp) => {
     expect(otp.code).to.match(/^\d{6}$/);
@@ -240,16 +240,26 @@ cy.mailiskDeviceCreateCustom({
 });
 
 cy.mailiskDeviceCreateFromBase32SecretKey({
-  base32SecretKey: 'JBSWY3DPEHPK3PXP',
+  base32_secret_key: 'JBSWY3DPEHPK3PXP',
   issuer: 'GitHub',
 });
 
 cy.mailiskDeviceCreateFromOtpAuthUrl({
-  otpAuthUrl: 'otpauth://totp/GitHub:qa@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub',
+  otp_auth_url: 'otpauth://totp/GitHub:qa@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub',
 });
 
 cy.mailiskDeviceOtpBySharedSecret('JBSWY3DPEHPK3PXP'); // one-off code without saving a device
 cy.mailiskDeviceDelete('9b1f6ec0-b90d-4bd8-8dd0-f6b2d5138273');
+```
+
+To avoid receiving a TOTP code right before it expires, pass min_seconds_until_expire. If the current code has fewer seconds remaining, Mailisk waits for the next code before returning.
+
+```js
+cy.mailiskDeviceOtpByDeviceId(device.id, { min_seconds_until_expire: 10 }).then((otp) => {
+  cy.get('#code').type(otp.code);
+});
+
+cy.mailiskDeviceOtpBySharedSecret('JBSWY3DPEHPK3PXP', { min_seconds_until_expire: 10 });
 ```
 
 ## Common test cases

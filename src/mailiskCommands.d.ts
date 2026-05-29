@@ -245,7 +245,7 @@ export interface TotpDevice {
   /** Source used to create the saved device */
   source: TotpDeviceSource;
   /** Optional expiration timestamp */
-  expiresAt?: string | null;
+  expires_at?: string | null;
   /** Date and time the device was created */
   created_at: string;
   /** Date and time the device was updated */
@@ -271,11 +271,11 @@ export interface TotpDeviceListResponse {
 
 export interface CreateTotpDeviceParams {
   /** Base32 shared secret. */
-  sharedSecret: string;
+  shared_secret: string;
   /** Optional device display name. */
   name?: string;
   /** Optional future ISO expiration timestamp. */
-  expiresAt?: string;
+  expires_at?: string;
 }
 
 export interface CreateCustomTotpDeviceParams {
@@ -294,12 +294,12 @@ export interface CreateCustomTotpDeviceParams {
   /** TOTP hash algorithm. */
   algorithm?: TotpAlgorithm;
   /** Optional future ISO expiration timestamp. */
-  expiresAt?: string;
+  expires_at?: string;
 }
 
 export interface CreateBase32SecretKeyTotpDeviceParams {
   /** Base32 secret key. */
-  base32SecretKey: string;
+  base32_secret_key: string;
   /** Optional device display name. */
   name?: string;
   /** Optional account label. */
@@ -313,12 +313,12 @@ export interface CreateBase32SecretKeyTotpDeviceParams {
   /** TOTP hash algorithm. */
   algorithm?: TotpAlgorithm;
   /** Optional future ISO expiration timestamp. */
-  expiresAt?: string;
+  expires_at?: string;
 }
 
 export interface CreateOtpAuthUrlTotpDeviceParams {
   /** otpauth://totp URL with a secret query parameter. */
-  otpAuthUrl: string;
+  otp_auth_url: string;
   /** Optional device display name override. */
   name?: string;
   /** Optional account label fallback. */
@@ -332,7 +332,7 @@ export interface CreateOtpAuthUrlTotpDeviceParams {
   /** TOTP hash algorithm, used only if missing from the URL. */
   algorithm?: TotpAlgorithm;
   /** Optional future ISO expiration timestamp. */
-  expiresAt?: string;
+  expires_at?: string;
 }
 
 export interface TotpOtpResponse {
@@ -340,6 +340,16 @@ export interface TotpOtpResponse {
   code: string;
   /** ISO timestamp when the code expires. */
   expires: string;
+}
+
+export interface TotpOtpParams {
+  /**
+   * Minimum number of seconds the generated code must remain valid.
+   *
+   * When the current TOTP code expires sooner than this value, the API waits
+   * for the next code before responding.
+   */
+  min_seconds_until_expire?: number;
 }
 
 declare global {
@@ -494,11 +504,45 @@ declare global {
         options?: Partial<Cypress.RequestOptions>,
       ): Cypress.Chainable<TotpOtpResponse>;
 
+      mailiskDeviceOtpByDeviceId(
+        /**
+         * Saved device ID.
+         */
+        deviceId: string,
+        /**
+         * OTP generation parameters.
+         */
+        params?: TotpOtpParams,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpOtpResponse>;
+
       mailiskDeviceOtpBySharedSecret(
         /**
          * Shared secret for one-off OTP generation.
          */
         sharedSecret: string,
+        /**
+         * Request options.
+         *
+         * See https://docs.cypress.io/api/commands/request#Arguments
+         */
+        options?: Partial<Cypress.RequestOptions>,
+      ): Cypress.Chainable<TotpOtpResponse>;
+
+      mailiskDeviceOtpBySharedSecret(
+        /**
+         * Shared secret for one-off OTP generation.
+         */
+        sharedSecret: string,
+        /**
+         * OTP generation parameters.
+         */
+        params?: TotpOtpParams,
         /**
          * Request options.
          *

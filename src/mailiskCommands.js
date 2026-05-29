@@ -216,6 +216,33 @@ class MailiskCommands {
     return value.trim();
   }
 
+  _hasTotpOtpParam(value) {
+    return (
+      value &&
+      typeof value === 'object' &&
+      Object.prototype.hasOwnProperty.call(value, 'min_seconds_until_expire')
+    );
+  }
+
+  _getTotpOtpArgs(paramsOrOptions = {}, options = {}, hasRequestOptions = false) {
+    if (hasRequestOptions || this._hasTotpOtpParam(paramsOrOptions)) {
+      return [{ ...(paramsOrOptions || {}) }, options];
+    }
+    return [{}, paramsOrOptions];
+  }
+
+  _buildTotpOtpUrlParams(params = {}) {
+    return this._buildUrlParams(params);
+  }
+
+  _buildTotpOtpBody(params = {}) {
+    const body = {};
+    if (params.min_seconds_until_expire != null) {
+      body.min_seconds_until_expire = params.min_seconds_until_expire;
+    }
+    return body;
+  }
+
   mailiskDeviceList(params = {}, options = {}) {
     const urlParams = this._buildUrlParams(params);
     const query = urlParams.toString();
@@ -239,14 +266,20 @@ class MailiskCommands {
     return this._withRequest((request) => request.post('api/devices/otpauth-url', input, options));
   }
 
-  mailiskDeviceOtpByDeviceId(deviceId, options = {}) {
+  mailiskDeviceOtpByDeviceId(deviceId, paramsOrOptions = {}, options = {}) {
+    const [params, requestOptions] = this._getTotpOtpArgs(paramsOrOptions, options, arguments.length >= 3);
     const encodedDeviceId = encodeURIComponent(this._requireNonEmptyString(deviceId, 'deviceId'));
-    return this._withRequest((request) => request.get(`api/devices/${encodedDeviceId}/otp`, options));
+    const urlParams = this._buildTotpOtpUrlParams(params);
+    const query = urlParams.toString();
+    const path = query ? `api/devices/${encodedDeviceId}/otp?${query}` : `api/devices/${encodedDeviceId}/otp`;
+    return this._withRequest((request) => request.get(path, requestOptions));
   }
 
-  mailiskDeviceOtpBySharedSecret(sharedSecret, options = {}) {
+  mailiskDeviceOtpBySharedSecret(sharedSecret, paramsOrOptions = {}, options = {}) {
+    const [params, requestOptions] = this._getTotpOtpArgs(paramsOrOptions, options, arguments.length >= 3);
     const normalizedSharedSecret = this._requireNonEmptyString(sharedSecret, 'sharedSecret');
-    return this._withRequest((request) => request.post('api/devices/otp', { sharedSecret: normalizedSharedSecret }, options));
+    const body = { shared_secret: normalizedSharedSecret, ...this._buildTotpOtpBody(params) };
+    return this._withRequest((request) => request.post('api/devices/otp', body, requestOptions));
   }
 
   mailiskDeviceDelete(deviceId, options = {}) {

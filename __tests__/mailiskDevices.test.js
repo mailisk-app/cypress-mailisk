@@ -45,17 +45,17 @@ describe('mailisk device commands', () => {
   });
 
   test.each([
-    ['mailiskDeviceCreate', 'api/devices', { sharedSecret: 'JBSWY3DPEHPK3PXP' }],
+    ['mailiskDeviceCreate', 'api/devices', { shared_secret: 'JBSWY3DPEHPK3PXP' }],
     ['mailiskDeviceCreateCustom', 'api/devices/custom', { secret: 'JBSWY3DPEHPK3PXP', digits: 8 }],
     [
       'mailiskDeviceCreateFromBase32SecretKey',
       'api/devices/base32-secret-key',
-      { base32SecretKey: 'JBSWY3DPEHPK3PXP' },
+      { base32_secret_key: 'JBSWY3DPEHPK3PXP' },
     ],
     [
       'mailiskDeviceCreateFromOtpAuthUrl',
       'api/devices/otpauth-url',
-      { otpAuthUrl: 'otpauth://totp/GitHub:qa@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub' },
+      { otp_auth_url: 'otpauth://totp/GitHub:qa@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub' },
     ],
   ])('%s posts to %s', async (methodName, expectedPath, input) => {
     const mockPost = jest.fn().mockResolvedValue({ id: 'device-id' });
@@ -79,6 +79,38 @@ describe('mailisk device commands', () => {
     expect(response.code).toBe('123456');
   });
 
+  test('gets OTP by saved device id with minimum expiry seconds', async () => {
+    const mockGet = jest.fn().mockResolvedValue({ code: '123456', expires: '2026-05-18T12:00:30.000Z' });
+    instance.request = { get: mockGet };
+    const options = { timeout: 5000 };
+
+    const response = await instance.mailiskDeviceOtpByDeviceId(
+      '9b1f6ec0-b90d-4bd8-8dd0-f6b2d5138273',
+      { min_seconds_until_expire: 10 },
+      options,
+    );
+
+    expect(mockGet).toHaveBeenCalledWith(
+      'api/devices/9b1f6ec0-b90d-4bd8-8dd0-f6b2d5138273/otp?min_seconds_until_expire=10',
+      options,
+    );
+    expect(response.code).toBe('123456');
+  });
+
+  test('gets OTP by saved device id with minimum expiry seconds as the second argument', async () => {
+    const mockGet = jest.fn().mockResolvedValue({ code: '123456', expires: '2026-05-18T12:00:30.000Z' });
+    instance.request = { get: mockGet };
+
+    await instance.mailiskDeviceOtpByDeviceId('9b1f6ec0-b90d-4bd8-8dd0-f6b2d5138273', {
+      min_seconds_until_expire: 10,
+    });
+
+    expect(mockGet).toHaveBeenCalledWith(
+      'api/devices/9b1f6ec0-b90d-4bd8-8dd0-f6b2d5138273/otp?min_seconds_until_expire=10',
+      {},
+    );
+  });
+
   test('encodes device id when getting OTP by saved device id', async () => {
     const mockGet = jest.fn().mockResolvedValue({ code: '123456', expires: '2026-05-18T12:00:30.000Z' });
     instance.request = { get: mockGet };
@@ -99,8 +131,40 @@ describe('mailisk device commands', () => {
 
     const response = await instance.mailiskDeviceOtpBySharedSecret(' JBSWY3DPEHPK3PXP ', options);
 
-    expect(mockPost).toHaveBeenCalledWith('api/devices/otp', { sharedSecret: 'JBSWY3DPEHPK3PXP' }, options);
+    expect(mockPost).toHaveBeenCalledWith('api/devices/otp', { shared_secret: 'JBSWY3DPEHPK3PXP' }, options);
     expect(response.code).toBe('123456');
+  });
+
+  test('gets OTP by shared secret with minimum expiry seconds', async () => {
+    const mockPost = jest.fn().mockResolvedValue({ code: '123456', expires: '2026-05-18T12:00:30.000Z' });
+    instance.request = { post: mockPost };
+    const options = { timeout: 5000 };
+
+    const response = await instance.mailiskDeviceOtpBySharedSecret(
+      ' JBSWY3DPEHPK3PXP ',
+      { min_seconds_until_expire: 10 },
+      options,
+    );
+
+    expect(mockPost).toHaveBeenCalledWith(
+      'api/devices/otp',
+      { shared_secret: 'JBSWY3DPEHPK3PXP', min_seconds_until_expire: 10 },
+      options,
+    );
+    expect(response.code).toBe('123456');
+  });
+
+  test('gets OTP by shared secret with minimum expiry seconds as the second argument', async () => {
+    const mockPost = jest.fn().mockResolvedValue({ code: '123456', expires: '2026-05-18T12:00:30.000Z' });
+    instance.request = { post: mockPost };
+
+    await instance.mailiskDeviceOtpBySharedSecret(' JBSWY3DPEHPK3PXP ', { min_seconds_until_expire: 10 });
+
+    expect(mockPost).toHaveBeenCalledWith(
+      'api/devices/otp',
+      { shared_secret: 'JBSWY3DPEHPK3PXP', min_seconds_until_expire: 10 },
+      {},
+    );
   });
 
   test('rejects blank shared secrets when getting OTP by shared secret', () => {
