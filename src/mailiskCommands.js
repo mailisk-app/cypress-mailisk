@@ -8,6 +8,10 @@ class MailiskCommands {
       'mailiskSearchInbox',
       'mailiskGetAttachment',
       'mailiskDownloadAttachment',
+      'mailiskSendEmail',
+      'mailiskGetOutboundEmail',
+      'mailiskReplyToEmail',
+      'mailiskForwardEmail',
       'mailiskSearchSms',
       'mailiskListSmsNumbers',
       'mailiskDeviceList',
@@ -132,6 +136,28 @@ class MailiskCommands {
         return request.getBinary(attachment.data.download_url, options);
       }),
     );
+  }
+
+  mailiskSendEmail(namespace, input, options = {}) {
+    const urlParams = this._buildUrlParams({ namespace: this._requireNonEmptyString(namespace, 'namespace') });
+    return this._withRequest((request) => request.post(`api/emails/send?${urlParams.toString()}`, input, options));
+  }
+
+  mailiskGetOutboundEmail(outboundEmailId, options = {}) {
+    const encodedOutboundEmailId = encodeURIComponent(
+      this._requireNonEmptyString(outboundEmailId, 'outboundEmailId'),
+    );
+    return this._withRequest((request) => request.get(`api/emails/outbound/${encodedOutboundEmailId}`, options));
+  }
+
+  mailiskReplyToEmail(emailId, input, options = {}) {
+    const encodedEmailId = encodeURIComponent(this._requireNonEmptyString(emailId, 'emailId'));
+    return this._withRequest((request) => request.post(`api/emails/${encodedEmailId}/reply`, input, options));
+  }
+
+  mailiskForwardEmail(emailId, input, options = {}) {
+    const encodedEmailId = encodeURIComponent(this._requireNonEmptyString(emailId, 'emailId'));
+    return this._withRequest((request) => request.post(`api/emails/${encodedEmailId}/forward`, input, options));
   }
 
   _mailiskSearchSmsAction(request, phoneNumber, _options, urlParams, startTime, nextTimeout) {

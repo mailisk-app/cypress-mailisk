@@ -5,7 +5,7 @@ Mailisk is an end-to-end email and SMS testing platform. It allows you to receiv
 - Get a unique subdomain and unlimited email addresses for free.
 - Easily automate E2E password reset and account verification by catching emails.
 - Receive SMS messages and automate SMS tests.
-- Virtual SMTP and SMS support to test without 3rd party clients.
+- Outbound email and virtual SMS support to test without 3rd party clients.
 
 ## Get started
 
@@ -148,6 +148,71 @@ cy.mailiskDownloadAttachment('attachment-id').then((buffer) => {
 });
 ```
 
+### Outbound email
+
+These commands create, queue, and inspect outbound email delivery through the Mailisk API.
+
+```js
+cy.mailiskSendEmail('mynamespace', {
+  from: {
+    email: 'support@mynamespace.mailisk.net',
+    name: 'Support',
+  },
+  to: ['verified@example.com'],
+  subject: 'Hello from Mailisk',
+  text: 'This is the plain text body.',
+  html: '<p>This is the HTML body.</p>',
+}).then((outboundEmail) => {
+  expect(outboundEmail.status).to.equal('queued');
+
+  cy.mailiskGetOutboundEmail(outboundEmail.id).then((detail) => {
+    expect(detail.recipients).to.not.be.empty;
+  });
+});
+```
+
+Messages sent only to the same namespace do not consume outbound usage because they are counted as inbound email when delivered.
+
+Send an outbound email with an attachment:
+
+```js
+cy.fixture('report.txt', 'base64').then((contentBase64) => {
+  cy.mailiskSendEmail('mynamespace', {
+    to: ['verified@example.com'],
+    subject: 'Report',
+    text: 'Attached.',
+    attachments: [
+      {
+        filename: 'report.txt',
+        content_type: 'application/octet-stream',
+        content_base64: contentBase64,
+      },
+    ],
+  });
+});
+```
+
+Reply to an inbound email returned by `cy.mailiskSearchInbox()`:
+
+```js
+cy.mailiskSearchInbox('mynamespace', {
+  to_addr_prefix: 'support@mynamespace.mailisk.net',
+}).then((response) => {
+  cy.mailiskReplyToEmail(response.data[0].id, {
+    text: 'Thanks, we received your message.',
+  });
+});
+```
+
+Forward an inbound email:
+
+```js
+cy.mailiskForwardEmail('inbound-email-id', {
+  to: ['verified@example.com'],
+  text: 'Forwarding this along.',
+});
+```
+
 ### cy.mailiskSearchSms
 
 This is the main command to interact with Mailisk SMS, it wraps the [Search SMS](/api-reference/search-sms) endpoint. Use a phone number that is registered to your account.
@@ -214,7 +279,7 @@ cy.mailiskListSmsNumbers().then((response) => {
 
 ### TOTP authenticator devices
 
-These commands manage saved Mailisk Authenticator devices and generate OTP codes through the Mailisk API. Use an organisation API key for these endpoints.
+These commands manage saved Mailisk Authenticator devices and generate OTP codes through the Mailisk API.
 
 ```js
 cy.mailiskDeviceList({ issuer: 'GitHub', username: 'qa@example.com' }).then((response) => {
